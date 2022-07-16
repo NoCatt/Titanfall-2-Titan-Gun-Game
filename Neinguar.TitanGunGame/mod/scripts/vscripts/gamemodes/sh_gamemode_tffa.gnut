@@ -1,0 +1,98 @@
+global function Sh_GamemodeTFFA_Init
+global function GetGunGameWeapons
+global const string GAMEMODE_TFFA = "tffa"
+
+global struct GunGameWeapon
+{
+	string weapon
+	array<string> mods = []
+	int offhandSlot = -1
+}
+
+struct {
+	array<GunGameWeapon> weapons
+	array<GunGameWeapon> hardWeapons
+} file
+
+void function Sh_GamemodeTFFA_Init()
+{
+	AddCallback_OnCustomGamemodesInit( CreateGamemodeTFFA )
+}
+
+void function CreateGamemodeTFFA()
+{
+	GameMode_Create( GAMEMODE_TFFA )
+	GameMode_SetName( GAMEMODE_TFFA, "#GAMEMODE_TFFA" )
+	GameMode_SetDesc( GAMEMODE_TFFA, "#PL_tffa_desc" )
+	GameMode_SetGameModeAnnouncement( GAMEMODE_TFFA, "ffa_modeDesc" )
+	GameMode_SetDefaultTimeLimits( GAMEMODE_TFFA, 10, 0.0 )
+	GameMode_AddScoreboardColumnData( GAMEMODE_TFFA, "#SCOREBOARD_TITAN_KILLS", PGS_TITAN_KILLS, 2 )
+	GameMode_AddScoreboardColumnData( GAMEMODE_TFFA, "#SCOREBOARD_TITAN_DAMAGE", PGS_ASSAULT_SCORE, 6 )
+	GameMode_SetColor( GAMEMODE_TFFA, [147, 204, 57, 255] )
+
+	AddPrivateMatchMode( GAMEMODE_TFFA )
+
+
+
+
+
+	GunGameWeapon ggLeadwall     = { weapon = "mp_titanweapon_leadwall", ... }
+	GunGameWeapon ggPlasma       = { weapon = "mp_titanweapon_sniper", ... }
+	GunGameWeapon ggParticle     = { weapon = "mp_titanweapon_particle_accelerator", ... }
+	GunGameWeapon ggThermite     = { weapon = "mp_titanweapon_meteor", ... }
+	GunGameWeapon gg40mm         = { weapon = "mp_titanweapon_sticky_40mm", ... }
+	GunGameWeapon ggPredator     = { weapon = "mp_titanweapon_predator_cannon", ... }
+	GunGameWeapon ggXo16         = { weapon = "mp_titanweapon_xo16_vanguard", ... }
+	GunGameWeapon ggTrippleThread= { weapon = "mp_titanweapon_triplethreat", ... }
+
+	file.weapons.append(gg40mm)
+	file.weapons.append(ggXo16)
+	file.weapons.append(ggLeadwall)
+	file.weapons.append(ggPredator)
+	file.weapons.append(ggParticle)
+	file.weapons.append(ggThermite)
+	file.weapons.append(ggPlasma)
+	file.weapons.append(ggTrippleThread)
+
+	GameMode_SetDefaultScoreLimits( GAMEMODE_GG, file.weapons.len(), 0 )
+
+	#if SERVER
+		GameMode_AddServerInit( GAMEMODE_TFFA, GamemodeTFFA_Init )
+		GameMode_AddServerInit( GAMEMODE_TFFA, GamemodeFFAShared_Init )
+		GameMode_SetPilotSpawnpointsRatingFunc( GAMEMODE_TFFA, RateSpawnpoints_Generic )
+		GameMode_SetTitanSpawnpointsRatingFunc( GAMEMODE_TFFA, RateSpawnpoints_Generic )
+	#elseif CLIENT
+		GameMode_AddClientInit( GAMEMODE_TFFA, ClGamemodeTFFA_Init )
+		GameMode_AddClientInit( GAMEMODE_TFFA, GamemodeFFAShared_Init )
+		GameMode_AddClientInit( GAMEMODE_TFFA, ClGamemodeTFFA_Init )
+	#endif
+	#if !UI
+		GameMode_SetScoreCompareFunc( GAMEMODE_TFFA, CompareAssaultScore )
+		GameMode_AddSharedInit( GAMEMODE_TFFA, GamemodeFFA_Dialogue_Init )
+	#endif
+	}
+
+array<GunGameWeapon> function GetGunGameWeapons()
+{
+	return file.weapons
+}
+
+string function GGWeaponToString( GunGameWeapon ggWeapon )
+{
+	// We do it in this order because split works weirdly and won't return empty strings for gaps :c
+	return ggWeapon.offhandSlot + "|" + ggWeapon.weapon + "|" + JoinStringArray( ggWeapon.mods, "," )
+}
+
+GunGameWeapon function StringToGGWeapon( string ggWeaponString )
+{
+	array<string> ggWeaponStringSplit = split( ggWeaponString, "|" )
+
+	GunGameWeapon ggWeapon
+	ggWeapon.offhandSlot = int(ggWeaponStringSplit[0])
+	ggWeapon.weapon = ggWeaponStringSplit[1]
+
+	if ( ggWeaponStringSplit.len() > 2 )
+		ggWeapon.mods = split( ggWeaponStringSplit[2], "," )
+
+	return ggWeapon
+}
