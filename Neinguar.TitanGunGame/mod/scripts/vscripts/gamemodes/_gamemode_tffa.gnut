@@ -72,7 +72,11 @@ void function UpdateLoadout( entity player ) {
 
 	GunGameWeapon weapon = weapons[ currentWeaponIndex ]
 
-	player.TakeAllWeapons()
+	foreach ( entity weapon in player.GetMainWeapons() ){
+        player.TakeWeaponNow( weapon.GetWeaponClassName())
+    }
+    foreach ( entity weapon in player.GetOffhandWeapons() ){
+        player.TakeWeaponNow( weapon.GetWeaponClassName())
 
 	player.GiveWeapon( weapon.weapon, weapon.meds )
 }
