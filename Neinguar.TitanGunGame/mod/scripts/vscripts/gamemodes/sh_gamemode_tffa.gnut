@@ -54,7 +54,7 @@ void function CreateGamemodeTFFA()
 	file.weapons.append(ggPlasma)
 	file.weapons.append(ggTrippleThread)
 
-	GameMode_SetDefaultScoreLimits( GAMEMODE_GG, file.weapons.len(), 0 )
+	GameMode_SetDefaultScoreLimits( GAMEMODE_TFFA, file.weapons.len(), 0 )
 
 	#if SERVER
 		GameMode_AddServerInit( GAMEMODE_TFFA, GamemodeTFFA_Init )
